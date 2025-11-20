@@ -16,8 +16,9 @@ export async function POST(req: Request) {
         const text = await extractPdfText(buffer);
 
         return NextResponse.json({ text });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("PDF ERROR:", err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        const message = err instanceof Error ? err.message : "Unknown error";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

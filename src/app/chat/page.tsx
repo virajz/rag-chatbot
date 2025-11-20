@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,12 +11,54 @@ type ChatMessage = {
     content: string;
 };
 
+type FileItem = {
+    id: string;
+    name: string;
+};
+
 export default function ChatPage() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState("");
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [isSending, setIsSending] = useState(false);
     const bottomRef = useRef<HTMLDivElement | null>(null);
+
+    const [files, setFiles] = useState<FileItem[]>([]);
+    const [selectedFile, setSelectedFile] = useState<string | null>(null);
+
+    useEffect(() => {
+        async function loadFiles() {
+            const res = await fetch("/api/files");
+            if (!res.ok) {
+                console.error("Failed to load files");
+                return;
+            }
+            const data = await res.json();
+            const fetchedFiles: FileItem[] = data.files || [];
+            setFiles(fetchedFiles);
+
+            const hadSelection = Boolean(selectedFile);
+            let nextSelection = selectedFile;
+
+            if (
+                nextSelection &&
+                !fetchedFiles.some((f) => f.id === nextSelection)
+            ) {
+                nextSelection = null;
+            }
+
+            if (!hadSelection && !nextSelection && fetchedFiles.length > 0) {
+                nextSelection = fetchedFiles[0].id;
+            }
+
+            if (nextSelection !== selectedFile) {
+                setSelectedFile(nextSelection);
+            }
+        }
+
+        loadFiles();
+    }, [selectedFile]);
+
 
     // Create / load persistent session id
     useEffect(() => {
@@ -55,7 +97,7 @@ export default function ChatPage() {
     }, [messages]);
 
     async function sendMessage() {
-        if (!input.trim() || !sessionId || isSending) return;
+        if (!input.trim() || !sessionId || isSending || !selectedFile) return;
 
         const content = input.trim();
         const userMessage: ChatMessage = { role: "user", content };
@@ -83,6 +125,7 @@ export default function ChatPage() {
                 body: JSON.stringify({
                     session_id: sessionId,
                     message: content,
+                    file_id: selectedFile,  // <-- important
                 }),
             });
 
@@ -131,7 +174,7 @@ export default function ChatPage() {
         }
     }
 
-    function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
@@ -142,27 +185,54 @@ export default function ChatPage() {
         <main className="p-6 max-w-xl mx-auto space-y-4">
             <h1 className="text-2xl font-bold text-center">Chat</h1>
 
-            <ScrollArea className="h-[60vh] rounded-md border p-4 bg-white">
-                {messages.map((msg, index) => (
-                    <div key={index} className="mb-3">
-                        <strong>{msg.role === "user" ? "You: " : "AI: "}</strong>
-                        {msg.content}
-                    </div>
-                ))}
-                <div ref={bottomRef} />
-            </ScrollArea>
-
-            <div className="flex gap-2">
-                <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Type your message..."
-                />
-                <Button onClick={sendMessage} disabled={isSending || !input.trim()}>
-                    Send
-                </Button>
+            <div className="mb-3">
+                <label className="text-sm font-medium">Select PDF</label>
+                <select
+                    className="border rounded p-2 w-full"
+                    value={selectedFile ?? ""}
+                    onChange={(e) => setSelectedFile(e.target.value)}
+                >
+                    {files.map((f: FileItem) => (
+                        <option key={f.id} value={f.id}>
+                            {f.name}
+                        </option>
+                    ))}
+                </select>
             </div>
+
+            {!selectedFile ? (
+                <div className="p-4 text-center text-gray-600">
+                    No PDF selected. Upload one on the /files page.
+                </div>
+            ) : (
+                <>
+                    <ScrollArea className="h-[60vh] rounded-md border p-4 bg-white">
+                        {messages.map((msg, index) => (
+                            <div key={index} className="mb-3">
+                                <strong>{msg.role === "user" ? "You: " : "AI: "}</strong>
+                                {msg.content}
+                            </div>
+                        ))}
+                        <div ref={bottomRef} />
+                    </ScrollArea>
+
+                    <div className="flex gap-2">
+                        <Input
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Type your message..."
+                            disabled={!selectedFile}
+                        />
+                        <Button
+                            onClick={sendMessage}
+                            disabled={isSending || !input.trim() || !selectedFile}
+                        >
+                            Send
+                        </Button>
+                    </div>
+                </>
+            )}
         </main>
     );
 }

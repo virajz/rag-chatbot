@@ -11,7 +11,7 @@ const groq = new Groq({
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const { session_id, message } = body;
+        const { session_id, message, file_id } = body;
 
         if (!session_id || !message) {
             return NextResponse.json(
@@ -31,9 +31,9 @@ export async function POST(req: Request) {
         }
 
         // 2. Retrieve relevant chunks
-        const matches = await retrieveRelevantChunks(queryEmbedding, 5);
+        const matches = await retrieveRelevantChunks(queryEmbedding, file_id, 5);
 
-        const contextText = matches.map((m: { chunk: any; }) => m.chunk).join("\n\n");
+        const contextText = matches.map((m) => m.chunk).join("\n\n");
 
         // 3. Load conversation history
         const { data: historyRows } = await supabase
@@ -70,8 +70,9 @@ export async function POST(req: Request) {
         const reply = completion.choices[0].message.content;
 
         return NextResponse.json({ reply });
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error("CHAT_ERROR:", err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        const message = err instanceof Error ? err.message : "Unknown error";
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

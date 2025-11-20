@@ -13,8 +13,9 @@ export async function POST(req: Request) {
         if (error) throw error;
 
         return NextResponse.json({ success: true });
-    } catch (err: any) {
-        console.error("SUPABASE_SAVE_ERROR:", err.message);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        console.error("SUPABASE_SAVE_ERROR:", message);
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }
