@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { v4 as uuid } from "uuid";
+import ReactMarkdown from "react-markdown";
 
 type ChatMessage = {
     role: "user" | "assistant";
@@ -53,6 +54,10 @@ export default function ChatPage() {
 
             if (nextSelection !== selectedFile) {
                 setSelectedFile(nextSelection);
+                // Reset chat when file changes
+                if (hadSelection) {
+                    resetChat();
+                }
             }
         }
 
@@ -181,9 +186,21 @@ export default function ChatPage() {
         }
     }
 
+    function resetChat() {
+        const newSessionId = uuid();
+        localStorage.setItem("chat_session_id", newSessionId);
+        setSessionId(newSessionId);
+        setMessages([]);
+    }
+
     return (
         <main className="p-6 max-w-xl mx-auto space-y-4">
-            <h1 className="text-2xl font-bold text-center">Chat</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold">Chat</h1>
+                <Button onClick={resetChat} variant="outline" size="sm">
+                    New Chat
+                </Button>
+            </div>
 
             <div className="mb-3">
                 <label className="text-sm font-medium">Select PDF</label>
@@ -208,9 +225,17 @@ export default function ChatPage() {
                 <>
                     <ScrollArea className="h-[60vh] rounded-md border p-4 bg-white">
                         {messages.map((msg, index) => (
-                            <div key={index} className="mb-3">
-                                <strong>{msg.role === "user" ? "You: " : "AI: "}</strong>
-                                {msg.content}
+                            <div key={index} className="mb-4">
+                                <strong className="text-sm font-semibold">
+                                    {msg.role === "user" ? "You" : "AI"}
+                                </strong>
+                                <div className={`mt-1 ${msg.role === "assistant" ? "prose prose-sm max-w-none" : ""}`}>
+                                    {msg.role === "assistant" ? (
+                                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                    ) : (
+                                        <p className="text-gray-800">{msg.content}</p>
+                                    )}
+                                </div>
                             </div>
                         ))}
                         <div ref={bottomRef} />
