@@ -1,36 +1,47 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RAG Chatbot
 
-## Getting Started
+A small Retrieval-Augmented Generation (RAG) chatbot built with Next.js and TypeScript. This project demonstrates integrating a local/content vector store and a generative model to answer questions from a document corpus.
 
-First, run the development server:
+**Tech stack:** Next.js 16, React 19, TypeScript, Tailwind CSS
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+**Highlights:**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+-   Uses `@mistralai/mistralai` for model integration
+-   Uses GROQ SDK for content/querying
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quick Start
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+-   Install dependencies:
 
-## Learn More
+    `npm install`
 
-To learn more about Next.js, take a look at the following resources:
+-   Start development server:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    `npm run dev`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# RAG Chatbot
 
-## Deploy on Vercel
+Minimal Retrieval-Augmented Generation Chatbot — quick start and required env keys.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Quick start
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+-   Install
+
+    `npm install`
+
+-   Dev
+
+    `npm run dev`
+
+-   Build
+
+    `npm run build`
+
+Environment
+
+Create `.env.local` (ignored by git). Required keys:
+
+-   `MISTARL_API_KEY`=your_mistral_api_key_here
+-   `GROQ_API_KEY`=your_groq_api_key_here
+
+Do not commit secrets. See `.env.example` for placeholders.
