@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
-import { generateAutoResponse } from "@/lib/autoResponder";
+import { inngest } from "@/inngest/client";
 
 // Type definition for WhatsApp webhook payload
 type WhatsAppWebhookPayload = {
@@ -81,25 +81,20 @@ export async function POST(req: Request) {
         // Trigger auto-response if it's a user message
         const messageText = payload.content?.text || payload.UserResponse;
         if (messageText && payload.event === "MoMessage") {
-            console.log("Triggering auto-response for message:", payload.messageId);
+            console.log("Triggering background job for message:", payload.messageId);
 
-            // Generate and send response asynchronously (don't wait for it)
-            generateAutoResponse(payload.from, messageText, payload.messageId)
-                .then((result) => {
-                    if (result.success && result.sent) {
-                        console.log("✅ Auto-response sent successfully to", payload.from);
-                        console.log("Response preview:", result.response?.substring(0, 100));
-                    } else if (result.success && !result.sent) {
-                        console.log("⚠️ Response generated but not sent:", result.error);
-                    } else if (result.noDocuments) {
-                        console.log("ℹ️ No documents mapped for phone number:", payload.from);
-                    } else {
-                        console.error("❌ Auto-response failed:", result.error);
-                    }
-                })
-                .catch((err) => {
-                    console.error("❌ Auto-response error:", err);
-                });
+            // Send event to Inngest for background processing
+            // This returns immediately, actual processing happens in background
+            await inngest.send({
+                name: "whatsapp/message.received",
+                data: {
+                    phoneNumber: payload.from,
+                    messageText: messageText,
+                    messageId: payload.messageId,
+                },
+            });
+
+            console.log("✅ Background job queued successfully");
         }
 
         return NextResponse.json({
