@@ -1,11 +1,12 @@
 # RAG Chatbot with WhatsApp Auto-Responder
 
 A Retrieval-Augmented Generation (RAG) chatbot built with Next.js and TypeScript. Features include:
-- 📄 PDF document processing with vector embeddings
-- 💬 Interactive chat interface with streaming responses
-- 📱 WhatsApp webhook integration with auto-responder
-- 🔗 Phone number to document mapping
-- 🗄️ Conversation history and context
+
+-   📄 PDF document processing with vector embeddings
+-   💬 Interactive chat interface with streaming responses
+-   📱 WhatsApp webhook integration with auto-responder
+-   🔗 Phone number to document mapping
+-   🗄️ Conversation history and context
 
 **Tech stack:** Next.js 16, React 19, TypeScript, Tailwind CSS, Supabase, Groq AI
 
@@ -38,7 +39,7 @@ WHATSAPP_VERIFY_TOKEN=your_webhook_verification_token_here
 
 # WhatsApp Sending (11za.in API)
 WHATSAPP_11ZA_AUTH_TOKEN=your_11za_auth_token
-WHATSAPP_11ZA_ORIGIN=https://www.displ.in/
+WHATSAPP_11ZA_ORIGIN=https://medistudygo.com/
 ```
 
 Do not commit secrets. Use `.env.example` as a template.
@@ -50,35 +51,39 @@ Do not commit secrets. Use `.env.example` as a template.
 **One-step setup:** Run `migrations/create_database.sql` in your Supabase SQL Editor.
 
 This single file creates all tables, indexes, functions, and views:
-- ✅ PDF document storage and RAG chunks
-- ✅ Web chat conversation history
-- ✅ WhatsApp message storage
-- ✅ Phone number to document mapping
-- ✅ Vector search functions
-- ✅ Auto-update triggers
+
+-   ✅ PDF document storage and RAG chunks
+-   ✅ Web chat conversation history
+-   ✅ WhatsApp message storage
+-   ✅ Phone number to document mapping
+-   ✅ Vector search functions
+-   ✅ Auto-update triggers
 
 ## Features
 
 ### 📄 Document Upload & Processing
-- Upload PDFs via `/files` page
-- Automatic text extraction and chunking
-- Vector embeddings using Mistral AI
-- Supabase vector storage
-- Map documents to phone numbers during upload
+
+-   Upload PDFs via `/files` page
+-   Automatic text extraction and chunking
+-   Vector embeddings using Mistral AI
+-   Supabase vector storage
+-   Map documents to phone numbers during upload
 
 ### 💬 Chat Interface
-- Real-time streaming responses
-- Thinking indicator while LLM processes
-- Markdown rendering for responses
-- Session-based conversation history
-- Document selection per chat
+
+-   Real-time streaming responses
+-   Thinking indicator while LLM processes
+-   Markdown rendering for responses
+-   Session-based conversation history
+-   Document selection per chat
 
 ### 📱 WhatsApp Auto-Responder
-- Webhook endpoint for WhatsApp messages
-- Automatic response generation using RAG
-- Phone number to document mapping
-- Multi-document support per phone number
-- Conversation context awareness
+
+-   Webhook endpoint for WhatsApp messages
+-   Automatic response generation using RAG
+-   Phone number to document mapping
+-   Multi-document support per phone number
+-   Conversation context awareness
 
 See [WHATSAPP_AUTO_RESPONDER.md](WHATSAPP_AUTO_RESPONDER.md) for detailed documentation.
 
@@ -101,18 +106,19 @@ node test-auto-responder.js
 ### Webhook Integration
 
 Configure your WhatsApp Business API to send messages to:
+
 ```
 POST https://your-app.vercel.app/api/webhook/whatsapp
 ```
 
 ## API Endpoints
 
-- `POST /api/process-pdf` - Upload and process PDF
-- `POST /api/chat` - Chat with streaming responses
-- `POST /api/webhook/whatsapp` - Receive WhatsApp messages
-- `POST /api/whatsapp/auto-respond` - Manual auto-response
-- `GET/POST/DELETE /api/phone-mappings` - Manage phone-document mappings
-- `GET /api/whatsapp/messages` - Retrieve WhatsApp messages
+-   `POST /api/process-pdf` - Upload and process PDF
+-   `POST /api/chat` - Chat with streaming responses
+-   `POST /api/webhook/whatsapp` - Receive WhatsApp messages
+-   `POST /api/whatsapp/auto-respond` - Manual auto-response
+-   `GET/POST/DELETE /api/phone-mappings` - Manage phone-document mappings
+-   `GET /api/whatsapp/messages` - Retrieve WhatsApp messages
 
 ## Testing
 
@@ -129,8 +135,8 @@ node test-auto-responder.js https://your-app.vercel.app
 
 ## Documentation
 
-- [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) - WhatsApp webhook configuration
-- [WHATSAPP_AUTO_RESPONDER.md](WHATSAPP_AUTO_RESPONDER.md) - Auto-responder system guide
+-   [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) - WhatsApp webhook configuration
+-   [WHATSAPP_AUTO_RESPONDER.md](WHATSAPP_AUTO_RESPONDER.md) - Auto-responder system guide
 
 ## Deployment
 

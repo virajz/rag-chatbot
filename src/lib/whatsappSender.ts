@@ -19,7 +19,7 @@ export async function sendWhatsAppMessage(
 ): Promise<SendMessageResult> {
     try {
         const authToken = process.env.WHATSAPP_11ZA_AUTH_TOKEN;
-        const originWebsite = process.env.WHATSAPP_11ZA_ORIGIN || "https://www.displ.in/";
+        const originWebsite = process.env.WHATSAPP_11ZA_ORIGIN || "https://medistudygo.com/";
 
         if (!authToken) {
             console.error("WHATSAPP_11ZA_AUTH_TOKEN not configured");
@@ -86,7 +86,7 @@ export async function sendWhatsAppTemplate(
 ): Promise<SendMessageResult> {
     try {
         const authToken = process.env.WHATSAPP_11ZA_AUTH_TOKEN;
-        const originWebsite = process.env.WHATSAPP_11ZA_ORIGIN || "https://www.displ.in/";
+        const originWebsite = process.env.WHATSAPP_11ZA_ORIGIN || "https://medistudygo.com/";
 
         if (!authToken) {
             return {
