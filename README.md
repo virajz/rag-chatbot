@@ -9,7 +9,7 @@ A Retrieval-Augmented Generation (RAG) chatbot built with Next.js and TypeScript
 
 **Tech stack:** Next.js 16, React 19, TypeScript, Tailwind CSS, Supabase, Groq AI
 
-📖 **[5-Minute Quick Start Guide](QUICK_START.md)** | [Architecture](ARCHITECTURE.md) | [Full WhatsApp Guide](WHATSAPP_AUTO_RESPONDER.md)
+📖 **[5-Minute Quick Start](QUICK_START.md)** | [How to Add Phone Numbers](HOW_TO_ADD_PHONE_NUMBERS.md) | [Architecture](ARCHITECTURE.md) | [WhatsApp Guide](WHATSAPP_AUTO_RESPONDER.md)
 
 ## Quick Start
 
