@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabaseClient";
-import { inngest } from "@/inngest/client";
+import { generateAutoResponse } from "@/lib/autoResponder";
 
 // Type definition for WhatsApp webhook payload
 type WhatsAppWebhookPayload = {
@@ -81,20 +81,20 @@ export async function POST(req: Request) {
         // Trigger auto-response if it's a user message
         const messageText = payload.content?.text || payload.UserResponse;
         if (messageText && payload.event === "MoMessage") {
-            console.log("Triggering background job for message:", payload.messageId);
+            console.log("Processing auto-response for message:", payload.messageId);
 
-            // Send event to Inngest for background processing
-            // This returns immediately, actual processing happens in background
-            await inngest.send({
-                name: "whatsapp/message.received",
-                data: {
-                    phoneNumber: payload.from,
-                    messageText: messageText,
-                    messageId: payload.messageId,
-                },
-            });
+            // Process directly - await the full response
+            const result = await generateAutoResponse(
+                payload.from,
+                messageText,
+                payload.messageId
+            );
 
-            console.log("✅ Background job queued successfully");
+            if (result.success) {
+                console.log("✅ Auto-response sent successfully");
+            } else {
+                console.error("❌ Auto-response failed:", result.error);
+            }
         }
 
         return NextResponse.json({
