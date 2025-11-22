@@ -165,6 +165,28 @@ export default function FilesPage() {
         <main className="p-6 max-w-4xl mx-auto">
             <h1 className="text-2xl font-bold mb-4">Manage PDFs</h1>
 
+            {/* Webhook Instructions */}
+            <div className="border rounded-lg p-4 bg-blue-50 border-blue-200 mb-6">
+                <h3 className="text-sm font-semibold text-blue-900 mb-2">11za Webhook Configuration</h3>
+                <p className="text-xs text-blue-800 mb-2">
+                    Configure this webhook URL in your 11za WhatsApp settings:
+                </p>
+                <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-300">
+                    <code className="text-xs font-mono text-blue-900 flex-1">
+                        https://rag-chatbot-ochre.vercel.app/api/webhook/whatsapp
+                    </code>
+                    <button
+                        onClick={() => {
+                            navigator.clipboard.writeText("https://rag-chatbot-ochre.vercel.app/api/webhook/whatsapp");
+                            alert("Webhook URL copied to clipboard!");
+                        }}
+                        className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                        Copy
+                    </button>
+                </div>
+            </div>
+
             <div className="border rounded-lg p-6 bg-white mb-6">
                 <h2 className="text-lg font-semibold mb-4">Upload PDF</h2>
 
