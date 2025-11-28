@@ -19,6 +19,8 @@ export async function POST(req: Request) {
         const intent = form.get("intent") as string | null;
         const authToken = form.get("auth_token") as string | null;
         const origin = form.get("origin") as string | null;
+        const devMode = form.get("dev_mode") === "true";
+        const processingMode = form.get("processing_mode") as "ocr" | "transcribe";
 
         if (!file) {
             return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -56,37 +58,75 @@ export async function POST(req: Request) {
                 }, { status: 500 });
             }
 
-            // Process image with OCR
             const base64Image = Buffer.from(buffer).toString('base64');
             const dataUrl = `data:${fileType};base64,${base64Image}`;
 
-            const client = new Mistral({ apiKey: mistralApiKey });
+            if (processingMode === "ocr") {
+                // Use Mistral OCR API
+                const client = new Mistral({ apiKey: mistralApiKey });
 
-            const ocrResponse = await client.ocr.process({
-                model: "mistral-ocr-latest",
-                document: {
-                    type: "image_url",
-                    imageUrl: dataUrl,
-                },
-                includeImageBase64: true
-            });
+                const ocrResponse = await client.ocr.process({
+                    model: "mistral-ocr-latest",
+                    document: {
+                        type: "image_url",
+                        imageUrl: dataUrl,
+                    },
+                    includeImageBase64: true
+                });
 
-            const respAny = ocrResponse as any;
+                const respAny = ocrResponse as any;
 
-            if (typeof respAny.text === "string" && respAny.text.length > 0) {
-                extractedText = respAny.text;
-            } else if (Array.isArray(respAny.pages)) {
-                extractedText = respAny.pages
-                    .map((p: any) => {
-                        if (p.markdown) return p.markdown;
-                        if (Array.isArray(p.lines)) return p.lines.map((l: any) => l.text || '').join('\n');
-                        if (Array.isArray(p.paragraphs)) return p.paragraphs.map((par: any) => par.text || '').join('\n');
-                        return '';
+                if (typeof respAny.text === "string" && respAny.text.length > 0) {
+                    extractedText = respAny.text;
+                } else if (Array.isArray(respAny.pages)) {
+                    extractedText = respAny.pages
+                        .map((p: any) => {
+                            if (p.markdown) return p.markdown;
+                            if (Array.isArray(p.lines)) return p.lines.map((l: any) => l.text || '').join('\n');
+                            if (Array.isArray(p.paragraphs)) return p.paragraphs.map((par: any) => par.text || '').join('\n');
+                            return '';
+                        })
+                        .filter(Boolean)
+                        .join('\n\n');
+                } else if (Array.isArray(respAny.blocks)) {
+                    extractedText = respAny.blocks.map((b: any) => b.text || '').filter(Boolean).join('\n');
+                }
+            } else {
+                // Use Pixtral vision model
+                const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${mistralApiKey}`,
+                    },
+                    body: JSON.stringify({
+                        model: "pixtral-12b-2409",
+                        messages: [
+                            {
+                                role: "user",
+                                content: [
+                                    {
+                                        type: "text",
+                                        text: "Extract all text from this image. Provide the text as it appears, maintaining the structure and formatting where possible."
+                                    },
+                                    {
+                                        type: "image_url",
+                                        image_url: {
+                                            url: dataUrl
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
                     })
-                    .filter(Boolean)
-                    .join('\n\n');
-            } else if (Array.isArray(respAny.blocks)) {
-                extractedText = respAny.blocks.map((b: any) => b.text || '').filter(Boolean).join('\n');
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Mistral API error: ${response.statusText}`);
+                }
+
+                const chatResponse = await response.json();
+                extractedText = chatResponse.choices[0].message.content || "";
             }
         } else {
             return NextResponse.json({
@@ -237,6 +277,7 @@ export async function POST(req: Request) {
             file_type: detectedFileType,
             chunks: chunks.length,
             phone_number: phoneNumber,
+            ...(devMode && { extractedText, processingMode }),
         });
     } catch (err: unknown) {
         console.error("PROCESS_FILE_ERROR:", err);

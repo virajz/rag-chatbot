@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileUpload } from "@/components/ui/file-upload";
+import { Switch } from "@/components/ui/switch";
 
 type FileItem = {
     id: string;
@@ -38,6 +39,11 @@ export default function FilesPage() {
     const [editSystemPrompt, setEditSystemPrompt] = useState("");
     const [isNewPhone, setIsNewPhone] = useState(false);
     const [savingSettings, setSavingSettings] = useState(false);
+
+    // Dev mode state
+    const [devMode, setDevMode] = useState(false);
+    const [processingMode, setProcessingMode] = useState<"ocr" | "transcribe">("transcribe");
+    const [devInfo, setDevInfo] = useState<{ extractedText?: string, chunks?: number, mode?: string } | null>(null);
 
     const loadPhoneGroups = useCallback(async () => {
         const res = await fetch("/api/phone-groups");
@@ -145,6 +151,8 @@ export default function FilesPage() {
         form.append("phone_number", editPhoneNumber.trim());
         form.append("auth_token", editAuthToken.trim());
         form.append("origin", editOrigin.trim());
+        form.append("dev_mode", devMode.toString());
+        form.append("processing_mode", processingMode);
 
         if (editIntent.trim()) {
             form.append("intent", editIntent.trim());
@@ -165,6 +173,15 @@ export default function FilesPage() {
 
             // Reset file selection
             setSelectedFile(null);
+
+            // Set dev info if dev mode
+            if (devMode) {
+                setDevInfo({
+                    extractedText: payload.extractedText,
+                    chunks: payload.chunks,
+                    mode: payload.processingMode
+                });
+            }
 
             await loadPhoneGroups();
 
@@ -261,11 +278,10 @@ export default function FilesPage() {
                         <div
                             key={group.phone_number}
                             onClick={() => setSelectedPhoneNumber(group.phone_number)}
-                            className={`p-3 mb-2 rounded-lg cursor-pointer border transition-colors ${
-                                selectedPhoneNumber === group.phone_number
-                                    ? "bg-blue-100 border-blue-400"
-                                    : "bg-white border-gray-200 hover:bg-gray-50"
-                            }`}
+                            className={`p-3 mb-2 rounded-lg cursor-pointer border transition-colors ${selectedPhoneNumber === group.phone_number
+                                ? "bg-blue-100 border-blue-400"
+                                : "bg-white border-gray-200 hover:bg-gray-50"
+                                }`}
                         >
                             <div className="font-mono font-semibold text-sm">{group.phone_number}</div>
                             {group.intent && (
@@ -328,9 +344,8 @@ export default function FilesPage() {
                                             onChange={(e) => setEditPhoneNumber(e.target.value)}
                                             placeholder="15558346206"
                                             disabled={!isNewPhone}
-                                            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                                !isNewPhone ? "bg-gray-100 cursor-not-allowed" : ""
-                                            }`}
+                                            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${!isNewPhone ? "bg-gray-100 cursor-not-allowed" : ""
+                                                }`}
                                         />
                                     </div>
 
@@ -453,7 +468,13 @@ export default function FilesPage() {
 
                                     {/* File Upload Section */}
                                     <div className="border rounded-lg p-6 bg-white">
-                                        <h3 className="text-lg font-semibold mb-4">Upload New File</h3>
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-lg font-semibold">Upload New File</h3>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium text-gray-700">Dev Mode</span>
+                                                <Switch checked={devMode} onCheckedChange={setDevMode} />
+                                            </div>
+                                        </div>
 
                                         <div className="space-y-4">
                                             <FileUpload
@@ -462,6 +483,36 @@ export default function FilesPage() {
                                                 maxSize={50}
                                                 selectedFile={selectedFile}
                                             />
+
+                                            {devMode && selectedFile && selectedFile.type.startsWith("image/") && (
+                                                <div className="border rounded-lg p-4 bg-gray-50">
+                                                    <h4 className="text-sm font-medium mb-3">Processing Mode</h4>
+                                                    <div className="flex gap-4">
+                                                        <label className="flex items-center gap-2 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                name="processingMode"
+                                                                value="ocr"
+                                                                checked={processingMode === "ocr"}
+                                                                onChange={(e) => setProcessingMode(e.target.value as "ocr")}
+                                                                className="w-4 h-4 text-blue-600"
+                                                            />
+                                                            <span className="text-sm">OCR (Mistral OCR)</span>
+                                                        </label>
+                                                        <label className="flex items-center gap-2 cursor-pointer">
+                                                            <input
+                                                                type="radio"
+                                                                name="processingMode"
+                                                                value="transcribe"
+                                                                checked={processingMode === "transcribe"}
+                                                                onChange={(e) => setProcessingMode(e.target.value as "transcribe")}
+                                                                className="w-4 h-4 text-blue-600"
+                                                            />
+                                                            <span className="text-sm">Transcribe (Pixtral Vision)</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             <button
                                                 onClick={handleUpload}
@@ -478,6 +529,26 @@ export default function FilesPage() {
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* Dev Info Display */}
+                                    {devInfo && (
+                                        <div className="border rounded-lg p-6 bg-gray-50">
+                                            <h3 className="text-lg font-semibold mb-4">Dev Mode: Parsed Content</h3>
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Extracted Text:</h4>
+                                                    <div className="bg-white p-4 rounded border max-h-96 overflow-y-auto">
+                                                        <pre className="text-xs text-gray-800 whitespace-pre-wrap">{devInfo.extractedText}</pre>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-sm font-medium text-gray-700 mb-2">Processing Info:</h4>
+                                                    <p className="text-sm text-gray-600">Mode: {devInfo.mode === "ocr" ? "OCR (Mistral OCR)" : "Transcribe (Pixtral Vision)"}</p>
+                                                    <p className="text-sm text-gray-600">Chunks created: {devInfo.chunks}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Files List */}
                                     {selectedGroup && selectedGroup.files.length > 0 && (
