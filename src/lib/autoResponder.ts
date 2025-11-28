@@ -65,7 +65,11 @@ export async function generateAutoResponse(
         const origin = phoneMappings[0].origin;
 
         console.log(`Retrieved ${phoneMappings.length} mappings for phone ${toNumber}`);
-        console.log(`Credentials found: ${!!auth_token && !!origin}`);
+        console.log(`Intent: ${phoneMappings[0].intent}`);
+        console.log(`Has custom system prompt: ${!!customSystemPrompt}`);
+        if (customSystemPrompt) {
+            console.log(`Custom system prompt (first 100 chars): ${customSystemPrompt.substring(0, 100)}...`);
+        }
 
         if (!auth_token || !origin) {
             console.error("No credentials found for phone number");
@@ -115,8 +119,8 @@ export async function generateAutoResponse(
             }));
 
         // 5. Generate response using Groq with dynamic system prompt
-        const defaultSystemPrompt =
-            `You are a helpful WhatsApp assistant. Your ONLY job is to answer questions based strictly on the provided document context.\n\n` +
+        const documentRules =
+            `Your ONLY job is to answer questions based strictly on the provided document context.\n\n` +
             `STRICT RULES:\n` +
             `- ONLY answer questions using information from the CONTEXT below\n` +
             `- If the answer is not in the CONTEXT, say "I don't have that information in the document"\n` +
@@ -126,7 +130,14 @@ export async function generateAutoResponse(
             `- Use clear, simple language appropriate for WhatsApp chat\n` +
             `- Format responses with line breaks for readability`;
 
-        const systemPrompt = customSystemPrompt || defaultSystemPrompt;
+        let systemPrompt: string;
+        if (customSystemPrompt) {
+            // Combine intent-based prompt with document rules
+            systemPrompt = `${customSystemPrompt}\n\n${documentRules}`;
+        } else {
+            // Use default prompt with document rules
+            systemPrompt = `You are a helpful WhatsApp assistant.\n\n${documentRules}`;
+        }
 
         const messages = [
             {
@@ -136,6 +147,10 @@ export async function generateAutoResponse(
             ...history.slice(-10), // Include last 10 messages (5 pairs) for context
             { role: "user" as const, content: messageText }
         ];
+
+        console.log(`Final system prompt (first 200 chars): ${systemPrompt.substring(0, 200)}...`);
+        console.log(`Context text length: ${contextText?.length || 0} characters`);
+        console.log(`Conversation history: ${history.length} messages`);
 
         const completion = await groq.chat.completions.create({
             model: "llama-3.3-70b-versatile",
