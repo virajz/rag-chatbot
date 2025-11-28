@@ -1,6 +1,8 @@
 "use client";
 
-import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileUpload } from "@/components/ui/file-upload";
 
 type FileItem = {
     id: string;
@@ -64,11 +66,8 @@ export default function FilesPage() {
         }
     }, [selectedPhoneNumber, phoneGroups]);
 
-    function handleFileSelect(e: ChangeEvent<HTMLInputElement>) {
-        const file = e.target.files?.[0];
-        if (file) {
-            setSelectedFile(file);
-        }
+    function handleFileSelect(file: File) {
+        setSelectedFile(file);
     }
 
     function handleNewPhone() {
@@ -164,10 +163,8 @@ export default function FilesPage() {
 
             alert(`Success! ${payload.chunks} chunks processed for ${payload.file_type} file`);
 
-            // Reset file input only
+            // Reset file selection
             setSelectedFile(null);
-            const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-            if (fileInput) fileInput.value = "";
 
             await loadPhoneGroups();
 
@@ -293,36 +290,14 @@ export default function FilesPage() {
                 </div>
             </div>
 
-            {/* RIGHT PANEL - Edit Details */}
+            {/* RIGHT PANEL - Tabs */}
             <div className="flex-1 overflow-y-auto">
                 <div className="p-6 max-w-4xl mx-auto">
-                    {/* Webhook Info */}
-                    <div className="border rounded-lg p-4 bg-blue-50 border-blue-200 mb-6">
-                        <h3 className="text-sm font-semibold text-blue-900 mb-2">11za Webhook Configuration</h3>
-                        <p className="text-xs text-blue-800 mb-2">
-                            Configure this webhook URL in your 11za WhatsApp settings:
-                        </p>
-                        <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-300">
-                            <code className="text-xs font-mono text-blue-900 flex-1">
-                                https://rag-chatbot-ochre.vercel.app/api/webhook/whatsapp
-                            </code>
-                            <button
-                                onClick={() => {
-                                    navigator.clipboard.writeText("https://rag-chatbot-ochre.vercel.app/api/webhook/whatsapp");
-                                    alert("Webhook URL copied to clipboard!");
-                                }}
-                                className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                            >
-                                Copy
-                            </button>
-                        </div>
-                    </div>
-
                     {(selectedPhoneNumber || isNewPhone) ? (
                         <>
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-2xl font-bold">
-                                    {isNewPhone ? "New Phone Number" : `Edit: ${selectedPhoneNumber}`}
+                                    {isNewPhone ? "New Phone Number" : selectedPhoneNumber}
                                 </h2>
                                 {selectedPhoneNumber && (
                                     <button
@@ -334,187 +309,220 @@ export default function FilesPage() {
                                 )}
                             </div>
 
-                            {/* Edit Form */}
-                            <div className="space-y-6">
-                                {/* Phone Number */}
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">
-                                        WhatsApp Business Number <span className="text-red-500">*</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editPhoneNumber}
-                                        onChange={(e) => setEditPhoneNumber(e.target.value)}
-                                        placeholder="15558346206"
-                                        disabled={!isNewPhone}
-                                        className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                            !isNewPhone ? "bg-gray-100 cursor-not-allowed" : ""
-                                        }`}
-                                    />
-                                </div>
+                            <Tabs defaultValue="configuration" className="w-full">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="configuration">Configuration</TabsTrigger>
+                                    <TabsTrigger value="files">Files</TabsTrigger>
+                                </TabsList>
 
-                                {/* Intent */}
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">
-                                        Intent/Purpose
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={editIntent}
-                                            onChange={(e) => setEditIntent(e.target.value)}
-                                            placeholder="E.g., Booking chatbot for restaurant reservations"
-                                            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        />
-                                        <button
-                                            onClick={generateSystemPrompt}
-                                            disabled={generatingPrompt || !editIntent.trim() || !editPhoneNumber.trim()}
-                                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm whitespace-nowrap"
-                                        >
-                                            {generatingPrompt ? "Generating..." : "Generate Prompt"}
-                                        </button>
-                                    </div>
-                                    <p className="mt-1 text-xs text-gray-500">
-                                        Describe the chatbot's purpose. Click "Generate Prompt" to create a system prompt using AI.
-                                    </p>
-                                </div>
-
-                                {/* System Prompt - Editable */}
-                                {editSystemPrompt && (
+                                {/* CONFIGURATION TAB */}
+                                <TabsContent value="configuration" className="space-y-6 mt-6">
+                                    {/* Phone Number */}
                                     <div>
                                         <label className="block text-sm font-medium mb-2">
-                                            System Prompt (Editable)
+                                            WhatsApp Business Number <span className="text-red-500">*</span>
                                         </label>
-                                        <textarea
-                                            value={editSystemPrompt}
-                                            onChange={(e) => setEditSystemPrompt(e.target.value)}
-                                            rows={8}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                            placeholder="System prompt for the chatbot..."
+                                        <input
+                                            type="text"
+                                            value={editPhoneNumber}
+                                            onChange={(e) => setEditPhoneNumber(e.target.value)}
+                                            placeholder="15558346206"
+                                            disabled={!isNewPhone}
+                                            className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                                !isNewPhone ? "bg-gray-100 cursor-not-allowed" : ""
+                                            }`}
                                         />
+                                    </div>
+
+                                    {/* Intent */}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">
+                                            Intent/Purpose
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={editIntent}
+                                                onChange={(e) => setEditIntent(e.target.value)}
+                                                placeholder="E.g., Booking chatbot for restaurant reservations"
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            <button
+                                                onClick={generateSystemPrompt}
+                                                disabled={generatingPrompt || !editIntent.trim() || !editPhoneNumber.trim()}
+                                                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm whitespace-nowrap"
+                                            >
+                                                {generatingPrompt ? "Generating..." : "Generate Prompt"}
+                                            </button>
+                                        </div>
                                         <p className="mt-1 text-xs text-gray-500">
-                                            Edit the system prompt to customize how the chatbot responds.
+                                            Describe the chatbot's purpose. Click "Generate Prompt" to create a system prompt using AI.
                                         </p>
                                     </div>
-                                )}
 
-                                {/* 11za Credentials */}
-                                <div className="border-t pt-6">
-                                    <h3 className="text-lg font-semibold mb-4">11za Credentials</h3>
-
-                                    <div className="space-y-4">
+                                    {/* System Prompt - Editable */}
+                                    {editSystemPrompt && (
                                         <div>
                                             <label className="block text-sm font-medium mb-2">
-                                                Auth Token <span className="text-red-500">*</span>
+                                                System Prompt (Editable)
                                             </label>
-                                            <input
-                                                type="text"
-                                                value={editAuthToken}
-                                                onChange={(e) => setEditAuthToken(e.target.value)}
-                                                placeholder="Your 11za authentication token"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            <textarea
+                                                value={editSystemPrompt}
+                                                onChange={(e) => setEditSystemPrompt(e.target.value)}
+                                                rows={8}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                                placeholder="System prompt for the chatbot..."
                                             />
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                Edit the system prompt to customize how the chatbot responds.
+                                            </p>
                                         </div>
+                                    )}
 
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">
-                                                Origin <span className="text-red-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={editOrigin}
-                                                onChange={(e) => setEditOrigin(e.target.value)}
-                                                placeholder="https://example.com/"
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            />
-                                        </div>
+                                    {/* 11za Credentials */}
+                                    <div className="border-t pt-6">
+                                        <h3 className="text-lg font-semibold mb-4">11za Credentials</h3>
 
-                                        {/* Save Settings Button */}
-                                        {!isNewPhone && (
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">
+                                                    Auth Token <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={editAuthToken}
+                                                    onChange={(e) => setEditAuthToken(e.target.value)}
+                                                    placeholder="Your 11za authentication token"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">
+                                                    Origin <span className="text-red-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={editOrigin}
+                                                    onChange={(e) => setEditOrigin(e.target.value)}
+                                                    placeholder="https://example.com/"
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                />
+                                            </div>
+
+                                            {/* Save Settings Button */}
                                             <button
                                                 onClick={savePhoneSettings}
-                                                disabled={savingSettings}
+                                                disabled={savingSettings || isNewPhone}
                                                 className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
                                             >
-                                                {savingSettings ? "Saving..." : "Save Settings (Intent, System Prompt, Credentials)"}
+                                                {savingSettings ? "Saving..." : "Save Configuration"}
                                             </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* File Upload */}
-                                <div className="border-t pt-6">
-                                    <h3 className="text-lg font-semibold mb-4">Upload File</h3>
-
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">
-                                                Select File (PDF or Image)
-                                            </label>
-                                            <input
-                                                type="file"
-                                                accept=".pdf,image/*"
-                                                onChange={handleFileSelect}
-                                                className="block w-full text-sm text-gray-500
-                                                    file:mr-4 file:py-2 file:px-4
-                                                    file:rounded-md file:border-0
-                                                    file:text-sm file:font-semibold
-                                                    file:bg-blue-50 file:text-blue-700
-                                                    hover:file:bg-blue-100"
-                                            />
-                                            {selectedFile && (
-                                                <p className="mt-2 text-sm text-gray-600">
-                                                    Selected: {selectedFile.name} ({selectedFile.type})
+                                            {isNewPhone && (
+                                                <p className="text-xs text-gray-500 text-center">
+                                                    Generate a system prompt first to create the phone number
                                                 </p>
                                             )}
                                         </div>
-
-                                        <button
-                                            onClick={handleUpload}
-                                            disabled={uploading || !selectedFile || !editPhoneNumber.trim() || !editAuthToken.trim() || !editOrigin.trim()}
-                                            className="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
-                                        >
-                                            {uploading ? "Processing..." : "Upload & Process File"}
-                                        </button>
                                     </div>
-                                </div>
+                                </TabsContent>
 
-                                {/* Files List */}
-                                {selectedGroup && selectedGroup.files.length > 0 && (
-                                    <div className="border-t pt-6">
-                                        <h3 className="text-lg font-semibold mb-4">
-                                            Uploaded Files ({selectedGroup.files.length})
-                                        </h3>
-
-                                        <div className="space-y-2">
-                                            {selectedGroup.files.map((file) => (
-                                                <div
-                                                    key={file.id}
-                                                    className="flex justify-between items-center p-4 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                                                >
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="font-medium text-sm">{file.name}</span>
-                                                            <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
-                                                                {file.file_type}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            {file.chunk_count || 0} chunks • {new Date(file.created_at).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        onClick={() => deleteFile(file.id)}
-                                                        className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                </div>
-                                            ))}
+                                {/* FILES TAB */}
+                                <TabsContent value="files" className="space-y-6 mt-6">
+                                    {/* Webhook Info */}
+                                    <div className="border rounded-lg p-4 bg-blue-50 border-blue-200">
+                                        <h3 className="text-sm font-semibold text-blue-900 mb-2">11za Webhook Configuration</h3>
+                                        <p className="text-xs text-blue-800 mb-2">
+                                            Configure this webhook URL in your 11za WhatsApp settings:
+                                        </p>
+                                        <div className="flex items-center gap-2 bg-white p-2 rounded border border-blue-300">
+                                            <code className="text-xs font-mono text-blue-900 flex-1">
+                                                https://rag-chatbot-ochre.vercel.app/api/webhook/whatsapp
+                                            </code>
+                                            <button
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText("https://rag-chatbot-ochre.vercel.app/api/webhook/whatsapp");
+                                                    alert("Webhook URL copied to clipboard!");
+                                                }}
+                                                className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                                            >
+                                                Copy
+                                            </button>
                                         </div>
                                     </div>
-                                )}
-                            </div>
+
+                                    {/* File Upload Section */}
+                                    <div className="border rounded-lg p-6 bg-white">
+                                        <h3 className="text-lg font-semibold mb-4">Upload New File</h3>
+
+                                        <div className="space-y-4">
+                                            <FileUpload
+                                                onFileSelect={handleFileSelect}
+                                                accept=".pdf,image/*"
+                                                maxSize={50}
+                                                selectedFile={selectedFile}
+                                            />
+
+                                            <button
+                                                onClick={handleUpload}
+                                                disabled={uploading || !selectedFile || !editPhoneNumber.trim() || !editAuthToken.trim() || !editOrigin.trim()}
+                                                className="w-full px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed font-medium"
+                                            >
+                                                {uploading ? "Processing..." : "Upload & Process File"}
+                                            </button>
+
+                                            {(!editAuthToken.trim() || !editOrigin.trim()) && !isNewPhone && (
+                                                <p className="text-xs text-amber-600 text-center">
+                                                    Please set credentials in the Configuration tab before uploading files
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Files List */}
+                                    {selectedGroup && selectedGroup.files.length > 0 && (
+                                        <div>
+                                            <h3 className="text-lg font-semibold mb-4">
+                                                Uploaded Files ({selectedGroup.files.length})
+                                            </h3>
+
+                                            <div className="space-y-2">
+                                                {selectedGroup.files.map((file) => (
+                                                    <div
+                                                        key={file.id}
+                                                        className="flex justify-between items-center p-4 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        <div className="flex-1">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-medium text-sm">{file.name}</span>
+                                                                <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
+                                                                    {file.file_type}
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-xs text-gray-500 mt-1">
+                                                                {file.chunk_count || 0} chunks • {new Date(file.created_at).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => deleteFile(file.id)}
+                                                            className="px-3 py-1.5 text-sm text-red-600 border border-red-300 rounded hover:bg-red-50"
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {(!selectedGroup || selectedGroup.files.length === 0) && (
+                                        <div className="text-center py-12 text-gray-500">
+                                            <p>No files uploaded yet.</p>
+                                            <p className="text-sm mt-2">Upload your first PDF or image file above.</p>
+                                        </div>
+                                    )}
+                                </TabsContent>
+                            </Tabs>
                         </>
                     ) : (
                         <div className="flex items-center justify-center h-96 text-gray-500">

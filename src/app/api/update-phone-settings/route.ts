@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
         const updateData: any = {};
         if (intent !== undefined) updateData.intent = intent;
         if (system_prompt !== undefined) updateData.system_prompt = system_prompt;
+        if (auth_token !== undefined) updateData.auth_token = auth_token;
+        if (origin !== undefined) updateData.origin = origin;
 
         const { error: updateMappingError } = await supabase
             .from("phone_document_mapping")
@@ -43,7 +45,7 @@ export async function POST(req: NextRequest) {
             throw updateMappingError;
         }
 
-        // Update credentials in all associated files
+        // Also update credentials in all associated files for consistency
         if (auth_token !== undefined || origin !== undefined) {
             const fileIds = existingMappings
                 .map(m => m.file_id)

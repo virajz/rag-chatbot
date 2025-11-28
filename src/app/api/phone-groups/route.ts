@@ -10,14 +10,14 @@ export async function GET() {
                 phone_number,
                 intent,
                 system_prompt,
+                auth_token,
+                origin,
                 file_id,
                 rag_files (
                     id,
                     name,
                     file_type,
-                    created_at,
-                    auth_token,
-                    origin
+                    created_at
                 )
             `)
             .order("phone_number", { ascending: true });
@@ -53,18 +53,10 @@ export async function GET() {
                     phone_number: phone,
                     intent: mapping.intent,
                     system_prompt: mapping.system_prompt,
-                    auth_token: file?.auth_token || "",
-                    origin: file?.origin || "",
+                    auth_token: mapping.auth_token || "",
+                    origin: mapping.origin || "",
                     files: [],
                 };
-            } else {
-                // Update credentials from the most recent file if available
-                if (file?.auth_token) {
-                    phoneGroups[phone].auth_token = file.auth_token;
-                }
-                if (file?.origin) {
-                    phoneGroups[phone].origin = file.origin;
-                }
             }
 
             if (file) {

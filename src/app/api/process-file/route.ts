@@ -184,12 +184,14 @@ export async function POST(req: Request) {
         const placeholderMapping = existingMappings?.find(m => m.file_id === null);
 
         if (placeholderMapping) {
-            // Update the existing placeholder mapping with the file_id
+            // Update the existing placeholder mapping with the file_id and credentials
             const { error: mappingError } = await supabase
                 .from("phone_document_mapping")
                 .update({
                     file_id: fileId,
-                    intent: intent || placeholderMapping.intent, // Keep existing intent if not provided
+                    intent: intent || placeholderMapping.intent,
+                    auth_token: authToken,
+                    origin: origin,
                 })
                 .eq("id", placeholderMapping.id);
 
@@ -203,21 +205,25 @@ export async function POST(req: Request) {
                 .insert({
                     phone_number: phoneNumber,
                     file_id: fileId,
-                    intent: intent || existingMappings[0].intent, // Keep existing intent if not provided
-                    system_prompt: existingMappings[0].system_prompt, // Keep existing system prompt
+                    intent: intent || existingMappings[0].intent,
+                    system_prompt: existingMappings[0].system_prompt,
+                    auth_token: authToken,
+                    origin: origin,
                 });
 
             if (mappingError) {
                 throw mappingError;
             }
         } else {
-            // Create new phone number mapping with intent
+            // Create new phone number mapping with intent and credentials
             const { error: mappingError } = await supabase
                 .from("phone_document_mapping")
                 .insert({
                     phone_number: phoneNumber,
                     file_id: fileId,
                     intent: intent || null,
+                    auth_token: authToken,
+                    origin: origin,
                 });
 
             if (mappingError) {

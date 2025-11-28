@@ -48,7 +48,7 @@ export async function generateAutoResponse(
         // 1.5. Fetch phone mapping details including system prompt and credentials
         const { data: phoneMappings, error: mappingError } = await supabase
             .from("phone_document_mapping")
-            .select("system_prompt, intent, file_id, rag_files(auth_token, origin)")
+            .select("system_prompt, intent, auth_token, origin")
             .eq("phone_number", toNumber);
 
         if (mappingError || !phoneMappings || phoneMappings.length === 0) {
@@ -59,38 +59,19 @@ export async function generateAutoResponse(
             };
         }
 
-        // Get system prompt from any mapping (they should all be the same)
+        // Get system prompt and credentials from first mapping (they should all be the same)
         const customSystemPrompt = phoneMappings[0].system_prompt;
+        const auth_token = phoneMappings[0].auth_token;
+        const origin = phoneMappings[0].origin;
 
         console.log(`Retrieved ${phoneMappings.length} mappings for phone ${toNumber}`);
-
-        // Find credentials from any mapping that has a file
-        let auth_token: string | null = null;
-        let origin: string | null = null;
-
-        for (const mapping of phoneMappings) {
-            console.log(`Checking mapping with file_id: ${mapping.file_id}`);
-
-            const fileData = Array.isArray(mapping.rag_files)
-                ? mapping.rag_files[0]
-                : mapping.rag_files;
-
-            console.log(`File data:`, fileData);
-
-            if (fileData?.auth_token && fileData?.origin) {
-                auth_token = fileData.auth_token;
-                origin = fileData.origin;
-                console.log(`Found credentials from mapping`);
-                break;
-            }
-        }
+        console.log(`Credentials found: ${!!auth_token && !!origin}`);
 
         if (!auth_token || !origin) {
-            console.error("No file credentials found for phone number");
-            console.error(`Checked ${phoneMappings.length} mappings, none had credentials`);
+            console.error("No credentials found for phone number");
             return {
                 success: false,
-                error: "No WhatsApp API credentials found. Please upload a file with credentials or update phone settings.",
+                error: "No WhatsApp API credentials found. Please set credentials in the Configuration tab.",
             };
         }
 
