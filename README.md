@@ -31,7 +31,7 @@ A Retrieval-Augmented Generation (RAG) chatbot built with Next.js and TypeScript
 Create `.env.local` (ignored by git). Required keys:
 
 ```env
-MISTARL_API_KEY=your_mistral_api_key_here
+MISTRAL_API_KEY=your_mistral_api_key_here
 GROQ_API_KEY=your_groq_api_key_here
 NEXT_PUBLIC_SUPABASE_URL=https://your-supabase-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
